@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: Regional Planning in Karur District</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The SPA is structured into four thematic, user-centric sections: 'The Foundation' (Statutory Framework), 'The Governance' (Institutional Structure), 'The Funding' (Financial Architecture), and 'The Action' (Existing Schemes & Strategic Path). This structure was chosen over a direct report-to-page mapping to create a logical narrative flow for the user. It starts with the 'why' (the law), moves to the 'who' (the institutions), then the 'how' (the funding), and finally the 'what' (the actions and future strategies). Navigation is handled by a sticky top bar. Interactivity is centered on clicking tabs and buttons to reveal detailed information and update visualizations, guiding the user through layers of complexity without overwhelming them. This approach enhances understanding by breaking down the dense report into digestible, interconnected themes. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Hierarchy of Plans (Regional, Master, DDP). Goal: Organize & Inform. Viz/Method: Interactive HTML/CSS diagram. Interaction: Clicking on a plan type reveals its description. Justification: A visual diagram is more intuitive than a list for showing hierarchical relationships. Library: Tailwind CSS for styling. 2. Report Info: Institutional Hierarchy. Goal: Organize. Viz/Method: Interactive HTML/CSS/JS diagram showing State, Region, District, and Local levels. Interaction: Clicking a level highlights it and displays the key actors and their roles. Justification: Visually separates the parallel 'Planning' and 'Implementation' streams, a key insight from the report. Library: Tailwind/JS. 3. Report Info: Financial Incentives under TNIP 2021 for Karur (B-Category). Goal: Compare & Inform. Viz/Method: Bar chart (Chart.js). Interaction: A dropdown allows users to select different incentive types (e.g., Capital Subsidy, SGST Reimbursement), updating the chart to show the benefit. Justification: A bar chart provides a clear visual comparison of the financial benefits, making the data more impactful than a table. Library: Chart.js. 4. Report Info: Strategic Thrusts for the new plan. Goal: Inform & Organize. Viz/Method: A set of clickable cards. Interaction: Each card represents a strategic thrust; clicking it expands to show detailed recommendations. Justification: This 'reveal on demand' interaction keeps the initial view clean and allows users to focus on one strategic area at a time. Library: Tailwind/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfdfc;
+            color: #333;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-button.active {
+            border-bottom-color: #8b5cf6;
+            color: #8b5cf6;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tab-button.active {
+            background-color: #8b5cf6;
+            color: #ffffff;
+        }
+        .plan-box.active {
+            border-color: #8b5cf6;
+            box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.2);
+        }
+        .hierarchy-level.active {
+            background-color: #ede9fe;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-stone-900">Karur District Regional Plan</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <button class="nav-button px-3 py-2 rounded-md text-sm font-medium text-stone-600 hover:text-violet-600" data-target="foundation">The Foundation</button>
+                        <button class="nav-button px-3 py-2 rounded-md text-sm font-medium text-stone-600 hover:text-violet-600" data-target="governance">The Governance</button>
+                        <button class="nav-button px-3 py-2 rounded-md text-sm font-medium text-stone-600 hover:text-violet-600" data-target="funding">The Funding</button>
+                        <button class="nav-button px-3 py-2 rounded-md text-sm font-medium text-stone-600 hover:text-violet-600" data-target="action">The Action</button>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-md">
+                        <option value="foundation">The Foundation</option>
+                        <option value="governance">The Governance</option>
+                        <option value="funding">The Funding</option>
+                        <option value="action">The Action</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="foundation" class="content-section space-y-12">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">The Foundation: Statutory Framework</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-stone-600">This section explores the legal bedrock for regional planning in Tamil Nadu. The Tamil Nadu Town and Country Planning (TN TCP) Act of 1971 provides the authority and procedures for all planning activities. We'll examine the hierarchy of plans it establishes and the significance of the 2022 state-wide revitalization that now directly includes Karur, setting the stage for its first-ever statutory regional plan.</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-center">Hierarchy of Plans under the TN TCP Act, 1971</h3>
+                <p class="text-center text-stone-600 mb-6">Click on each plan type to understand its role in the nested system of spatial governance.</p>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+                    <div class="plan-box border-2 border-stone-200 rounded-lg p-4 w-full md:w-1/3 text-center cursor-pointer transition" data-plan="regional">
+                        <h4 class="font-bold text-lg">Regional Plan</h4>
+                        <p class="text-sm text-stone-500">High-Level Strategy</p>
+                    </div>
+                    <div class="text-2xl text-stone-400 transform md:-rotate-90">➔</div>
+                    <div class="plan-box border-2 border-stone-200 rounded-lg p-4 w-full md:w-1/3 text-center cursor-pointer transition" data-plan="master">
+                        <h4 class="font-bold text-lg">Master Plan</h4>
+                        <p class="text-sm text-stone-500">Town-Level Growth</p>
+                    </div>
+                    <div class="text-2xl text-stone-400 transform md:-rotate-90">➔</div>
+                    <div class="plan-box border-2 border-stone-200 rounded-lg p-4 w-full md:w-1/3 text-center cursor-pointer transition" data-plan="ddp">
+                        <h4 class="font-bold text-lg">Detailed Development Plan (DDP)</h4>
+                        <p class="text-sm text-stone-500">Micro-Level Layout</p>
+                    </div>
+                </div>
+                <div id="plan-details" class="mt-6 p-6 bg-violet-50 rounded-lg min-h-[150px] flex items-center justify-center">
+                    <p class="text-stone-700 text-center">Select a plan type above for details.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-center">Key Provisions of the TN TCP Act, 1971</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Provision</th>
+                                <th>Key Features</th>
+                                <th>Implications for Karur's Regional Plan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Declaration of Regional Planning Area</strong> (Sec 10)</td>
+                                <td>Government can declare a region for planning after two months of public consultation.</td>
+                                <td>Karur is formally included in the Tiruchirappalli-Karur regional planning area via the 2022 notification.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Constitution of Regional Planning Authority</strong> (Sec 11)</td>
+                                <td>A corporate body with a Chairman, officials, local authority members, and MLAs is formed to oversee the region.</td>
+                                <td>A new Authority will be constituted for the region, its composition being critical for coordination.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Contents of Regional Plan</strong> (Sec 15)</td>
+                                <td>A strategic document proposing land use zones, growth centers, major transport networks, and conservation areas.</td>
+                                <td>The plan must strategically address Karur's economic drivers (textiles) and challenges (water scarcity).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Control of Development</strong> (Sec 47)</td>
+                                <td>Once a plan is active, no development can contravene it, giving the plan legal enforcement power.</td>
+                                <td>The future regional plan will become the primary legal instrument guiding all development in Karur.</td>
+                            </tr>
+                             <tr>
+                                <td><strong>Land Acquisition</strong> (Sec 36, 37)</td>
+                                <td>Land designated in a plan can be acquired for public purposes, empowering the authority to secure land for projects.</td>
+                                <td>This allows acquisition for critical regional infrastructure like arterial roads or industrial parks.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="governance" class="content-section space-y-12">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">The Governance: Institutional Structure</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-stone-600">Effective planning requires a robust institutional framework. This section maps the complex ecosystem of governance, from the state-level Directorate of Town and Country Planning (DTCP) down to district agencies. A key insight is the parallel structure of 'planning' bodies and powerful 'implementation' agencies like the DRDA and DIC, which control most development funds. Understanding this dynamic is crucial for the plan's execution.</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-6 text-center">Institutional Hierarchy for Planning & Development</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold text-center text-violet-700 mb-4">Statutory Planning Hierarchy</h4>
+                        <div class="space-y-4">
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="state-plan">
+                                <h5 class="font-semibold">State Level</h5>
+                                <p class="text-sm text-stone-500">Directorate of Town & Country Planning (DTCP)</p>
+                            </div>
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="region-plan">
+                                <h5 class="font-semibold">Regional Level</h5>
+                                <p class="text-sm text-stone-500">Regional Planning Authority</p>
+                            </div>
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="district-plan">
+                                <h5 class="font-semibold">District Level</h5>
+                                <p class="text-sm text-stone-500">District Town & Country Planning Office</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-center text-teal-700 mb-4">Key Implementation Machinery</h4>
+                        <div class="space-y-4">
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="state-impl">
+                                <h5 class="font-semibold">State Level</h5>
+                                <p class="text-sm text-stone-500">Sectoral Depts, TNUDF, TNHB</p>
+                            </div>
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="district-impl">
+                                <h5 class="font-semibold">District Level</h5>
+                                <p class="text-sm text-stone-500">District Collector, DRDA, DIC</p>
+                            </div>
+                            <div class="hierarchy-level border border-stone-200 p-4 rounded-lg cursor-pointer" data-level="local-impl">
+                                <h5 class="font-semibold">Local Level</h5>
+                                <p class="text-sm text-stone-500">Urban & Rural Local Bodies</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="level-details" class="mt-8 p-6 bg-stone-100 rounded-lg min-h-[120px] flex items-center justify-center">
+                    <p class="text-stone-700 text-center">Click on a level to see its primary roles.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="funding" class="content-section space-y-12">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">The Funding: Financial Architecture</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-stone-600">A plan's vision is realized through its funding. This section details the financial streams available for development in Karur, from government schemes to specialized institutions and industrial incentives. A critical takeaway is that funding follows specific, "bankable" projects, not abstract plans. The regional plan must therefore act as a strategic packager, aligning its goals with these existing financial pipelines.</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-2 text-center">Industrial Incentives in Karur (B-Category District)</h3>
+                <p class="text-center text-stone-600 mb-6">Karur's "B-Category" status under the Tamil Nadu Industrial Policy 2021 provides a structured package of incentives to attract investment. Explore the potential value of these incentives for a sample project.</p>
+                <div class="w-full max-w-sm mx-auto mb-6">
+                    <label for="incentive-selector" class="block text-sm font-medium text-stone-700">Select Incentive Type:</label>
+                    <select id="incentive-selector" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-md">
+                        <option value="capital_subsidy" selected>Flexible Capital Subsidy</option>
+                        <option value="sgst">SGST Reimbursement</option>
+                        <option value="training">Training Subsidy</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="incentivesChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-center">Detailed Industrial Incentives (TNIP 2021)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Incentive Type</th>
+                                <th>Details for 'B' Districts</th>
+                                <th>Relevance to Karur's Industries</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Flexible Capital Subsidy</strong></td>
+                                <td>Up to 37% of Eligible Fixed Assets (EFA) for large projects.</td>
+                                <td>Highly attractive for modernizing textile mills or setting up new bus body units.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SGST Reimbursement</strong></td>
+                                <td>100% of SGST reimbursed for 15 years.</td>
+                                <td>Benefits high-turnover industries like textile exporters, improving cash flow.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sunrise Sector Incentives</strong></td>
+                                <td>Enhanced subsidies for Technical Textiles, Food Processing, etc.</td>
+                                <td>Crucial for diversifying Karur's economy into high-value sectors.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Training Subsidy</strong></td>
+                                <td>₹4,000/month per worker for 6 months (₹6,000 for women/SC/ST).</td>
+                                <td>Supports skilling the local workforce for Karur's specific industrial needs.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="action" class="content-section space-y-12">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">The Action: Schemes & Strategy</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-stone-600">While Karur awaits its first statutory regional plan, development is actively ongoing through various schemes. This section reviews these "de facto" planning efforts and proposes a strategic vision for the new plan. The goal is to move from parallel, uncoordinated activities to an integrated strategy that leverages Karur's strengths for sustainable and equitable growth.</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-6 text-center">Proposed Strategic Thrusts for Karur's Regional Plan</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="strategy-card border border-stone-200 p-4 rounded-lg text-center cursor-pointer hover:shadow-md transition" data-strategy="cluster">
+                        <div class="text-4xl mb-2">🏭</div>
+                        <h4 class="font-bold">Integrated Cluster Development</h4>
+                    </div>
+                    <div class="strategy-card border border-stone-200 p-4 rounded-lg text-center cursor-pointer hover:shadow-md transition" data-strategy="divide">
+                        <div class="text-4xl mb-2">🌉</div>
+                        <h4 class="font-bold">Bridging Urban-Rural Divide</h4>
+                    </div>
+                    <div class="strategy-card border border-stone-200 p-4 rounded-lg text-center cursor-pointer hover:shadow-md transition" data-strategy="water">
+                        <div class="text-4xl mb-2">💧</div>
+                        <h4 class="font-bold">Water & Environment</h4>
+                    </div>
+                    <div class="strategy-card border border-stone-200 p-4 rounded-lg text-center cursor-pointer hover:shadow-md transition" data-strategy="human">
+                        <div class="text-4xl mb-2">🧑‍🏫</div>
+                        <h4 class="font-bold">Human Capital Development</h4>
+                    </div>
+                </div>
+                <div id="strategy-details" class="mt-6 p-6 bg-violet-50 rounded-lg min-h-[150px] flex items-center justify-center">
+                    <p class="text-stone-700 text-center">Click a strategy above for recommendations.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-center">Major Development Schemes Active in Karur</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scheme Name</th>
+                                <th>Nodal Agency</th>
+                                <th>Key Objectives</th>
+                                <th>Potential Linkage to Regional Plan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>MGNREGS</strong></td>
+                                <td>DRDA</td>
+                                <td>Guaranteed wage employment; creating rural assets.</td>
+                                <td>Aligning asset creation (e.g., check dams) with the plan's water management strategy.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>TN Mini Textile Park Scheme</strong></td>
+                                <td>DIC / Textiles Dept.</td>
+                                <td>Provide capital grants to establish mini textile parks.</td>
+                                <td>Integrating new parks into the plan's industrial zones and ensuring trunk infrastructure.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Vazhndhu Kattuvom (TNRTP)</strong></td>
+                                <td>TNRTP District Unit</td>
+                                <td>Promote rural enterprises with financial support.</td>
+                                <td>Linking rural enterprises to opportunities identified in the plan (e.g., ancillary units).</td>
+                            </tr>
+                             <tr>
+                                <td><strong>TNUFIP (ADB assisted)</strong></td>
+                                <td>TNUDF / ULBs</td>
+                                <td>Fund priority urban water, sewerage, and drainage projects.</td>
+                                <td>Identifying urban infrastructure gaps in Karur for funding proposals under this program.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const mobileNav = document.getElementById('mobile-nav');
+            const sections = document.querySelectorAll('.content-section');
+            let incentivesChart;
+
+            const planDetailsData = {
+                regional: {
+                    title: 'Regional Plan',
+                    text: 'A high-level, strategic "inter-settlement" plan guiding development across a large territory of multiple towns and villages. It designates broad land use zones (residential, industrial, agricultural), identifies growth centers, and plans for major transport networks and public utilities.'
+                },
+                master: {
+                    title: 'Master Plan',
+                    text: 'An "intra-settlement" plan for a specific local area like a municipality. It provides a long-term (20-30 years) guideline for the town\'s future growth, covering economy, housing, transport, and infrastructure within the framework set by the Regional Plan.'
+                },
+                ddp: {
+                    title: 'Detailed Development Plan (DDP)',
+                    text: 'The most specific plan, prepared for small pockets of land within a Master Plan area. It earmarks land for precise uses like parks, link roads, and residential layouts, providing detailed development regulations.'
+                }
+            };
+            
+            const levelDetailsData = {
+                'state-plan': 'Sets state-wide policy, provides technical guidance, and approves all statutory plans. The DTCP is the apex body.',
+                'region-plan': 'Newly constituted for the Tiruchirappalli-Karur region. Tasked with conducting surveys and preparing the statutory Regional Plan.',
+                'district-plan': 'Headed by the District Collector, this office prepares and implements local plans (Master Plan/DDP) and provides input for the Regional Plan.',
+                'state-impl': 'Includes sectoral departments (Industries, Agriculture) and specialized agencies like TNUDF (for urban infrastructure finance) that execute large-scale schemes.',
+                'district-impl': 'The "doing" agencies. The District Collector coordinates, DRDA handles rural schemes (roads, employment), and DIC promotes MSMEs.',
+                'local-impl': 'Municipalities and Panchayats deliver basic civic services (water, sanitation, local roads) and execute local works funded by grants.'
+            };
+            
+            const strategyDetailsData = {
+                cluster: 'Move beyond simple zoning to plan for the entire industrial ecosystem: common effluent treatment plants, logistics hubs, worker housing, and skill centers.',
+                divide: 'Create economic synergies between industry and agriculture. Propose and zone for agro-industrial corridors and food processing parks to link farms to factories.',
+                water: 'Implement a region-wide strategy for water conservation, rainwater harvesting, rejuvenation of tanks, and promoting industrial water recycling to address scarcity and pollution.',
+                human: 'Spatially link industrial zones with skill development centers and technical institutes. Ensure training programs are relevant to the needs of both industrial clusters and rural enterprises.'
+            };
+
+            function setActiveSection(targetId) {
+                sections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+                navButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.target === targetId);
+                });
+                if (mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+                
+                if (targetId === 'funding' && !incentivesChart) {
+                    renderIncentivesChart('capital_subsidy');
+                }
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    setActiveSection(button.dataset.target);
+                });
+            });
+
+            mobileNav.addEventListener('change', (e) => {
+                setActiveSection(e.target.value);
+            });
+            
+            const planBoxes = document.querySelectorAll('.plan-box');
+            const planDetailsContainer = document.getElementById('plan-details');
+
+            planBoxes.forEach(box => {
+                box.addEventListener('click', () => {
+                    planBoxes.forEach(b => b.classList.remove('active'));
+                    box.classList.add('active');
+                    const planKey = box.dataset.plan;
+                    const details = planDetailsData[planKey];
+                    planDetailsContainer.innerHTML = `<h4 class="font-bold text-lg mb-2 text-violet-800">${details.title}</h4><p class="text-stone-700 text-center">${details.text}</p>`;
+                });
+            });
+
+            const hierarchyLevels = document.querySelectorAll('.hierarchy-level');
+            const levelDetailsContainer = document.getElementById('level-details');
+            
+            hierarchyLevels.forEach(level => {
+                level.addEventListener('click', () => {
+                    hierarchyLevels.forEach(l => l.classList.remove('active'));
+                    level.classList.add('active');
+                    const levelKey = level.dataset.level;
+                    levelDetailsContainer.innerHTML = `<p class="text-stone-700 text-center">${levelDetailsData[levelKey]}</p>`;
+                });
+            });
+            
+            const strategyCards = document.querySelectorAll('.strategy-card');
+            const strategyDetailsContainer = document.getElementById('strategy-details');
+
+            strategyCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const strategyKey = card.dataset.strategy;
+                    strategyDetailsContainer.innerHTML = `<p class="text-stone-700 text-center">${strategyDetailsData[strategyKey]}</p>`;
+                });
+            });
+
+            function renderIncentivesChart(incentiveType) {
+                const ctx = document.getElementById('incentivesChart').getContext('2d');
+                if (incentivesChart) {
+                    incentivesChart.destroy();
+                }
+
+                let chartData;
+                const sampleProjectCost = 100; // In Cr
+                
+                switch(incentiveType) {
+                    case 'capital_subsidy':
+                        chartData = {
+                            labels: ['Project Cost', 'Max Subsidy'],
+                            datasets: [{
+                                label: 'Flexible Capital Subsidy (in ₹ Cr)',
+                                data: [sampleProjectCost, sampleProjectCost * 0.37],
+                                backgroundColor: ['rgba(220, 220, 220, 0.5)', 'rgba(139, 92, 246, 0.6)'],
+                                borderColor: ['rgba(200, 200, 200, 1)', 'rgba(139, 92, 246, 1)'],
+                                borderWidth: 1
+                            }]
+                        };
+                        break;
+                    case 'sgst':
+                         chartData = {
+                            labels: ['Annual SGST Paid', 'SGST Reimbursed'],
+                            datasets: [{
+                                label: 'SGST Reimbursement (Sample, in ₹ Cr)',
+                                data: [10, 10], // Assuming 10 Cr annual SGST
+                                backgroundColor: ['rgba(220, 220, 220, 0.5)', 'rgba(20, 184, 166, 0.6)'],
+                                borderColor: ['rgba(200, 200, 200, 1)', 'rgba(20, 184, 166, 1)'],
+                                borderWidth: 1
+                            }]
+                        };
+                        break;
+                    case 'training':
+                        chartData = {
+                            labels: ['Total Training Cost', 'Training Subsidy'],
+                            datasets: [{
+                                label: 'Training Subsidy (Sample 100 workers, in ₹ Lakh)',
+                                data: [30, 24], // 100 workers * 4000 * 6 months = 24 Lakh
+                                backgroundColor: ['rgba(220, 220, 220, 0.5)', 'rgba(249, 115, 22, 0.6)'],
+                                borderColor: ['rgba(200, 200, 200, 1)', 'rgba(249, 115, 22, 1)'],
+                                borderWidth: 1
+                            }]
+                        };
+                        break;
+                }
+
+                incentivesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: document.getElementById('incentive-selector').options[document.getElementById('incentive-selector').selectedIndex].text
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Value'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            document.getElementById('incentive-selector').addEventListener('change', function(e) {
+                renderIncentivesChart(e.target.value);
+            });
+
+            setActiveSection('foundation');
+        });
+    </script>
+</body>
+</html>
